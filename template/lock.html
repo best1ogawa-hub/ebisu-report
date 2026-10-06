@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>えびす旅館 実績レポート（保護）</title>
+<style>
+body{font-family:"Yu Gothic","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;background:#f6f8fb;color:#222;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
+.box{background:#fff;border:1px solid #e3e8f0;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.07);padding:34px 30px;width:340px;text-align:center}
+h1{font-size:18px;color:#1f3864;margin:0 0 4px}.sub{font-size:12px;color:#888;margin-bottom:22px}
+input{width:100%;padding:11px 12px;font-size:15px;border:1.5px solid #cdd6e4;border-radius:8px;box-sizing:border-box;margin-bottom:12px}
+input:focus{outline:none;border-color:#2e5496}
+button{width:100%;padding:11px;font-size:15px;font-weight:700;color:#fff;background:#1f3864;border:none;border-radius:8px;cursor:pointer}
+button:hover{background:#2e5496}button:disabled{background:#9aa7bd;cursor:wait}
+.err{color:#c0392b;font-size:13px;min-height:18px;margin-top:10px}
+.lock{font-size:30px;margin-bottom:8px}
+</style></head><body>
+<div class="box">
+<div class="lock">&#128274;</div>
+<h1>えびす旅館 実績レポート</h1>
+<div class="sub">閲覧にはパスワードが必要です</div>
+<form id="f"><input id="pw" type="password" placeholder="パスワード" autofocus autocomplete="current-password">
+<button id="b" type="submit">表示する</button></form>
+<div class="err" id="e"></div>
+</div>
+<script>
+const ENC={{ENC}};
+const b2a=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const f=document.getElementById('f'),pwEl=document.getElementById('pw'),err=document.getElementById('e'),btn=document.getElementById('b');
+f.addEventListener('submit',async ev=>{
+  ev.preventDefault(); err.textContent=''; btn.disabled=true; btn.textContent='復号中…';
+  try{
+    const enc=new TextEncoder();
+    const km=await crypto.subtle.importKey('raw',enc.encode(pwEl.value),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b2a(ENC.salt),iterations:ENC.iter,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b2a(ENC.iv)},key,b2a(ENC.ct));
+    const html=new TextDecoder().decode(pt);
+    document.open();document.write(html);document.close();
+  }catch(e){
+    btn.disabled=false; btn.textContent='表示する';
+    err.textContent='パスワードが違います'; pwEl.value=''; pwEl.focus();
+  }
+});
+</script></body></html>
